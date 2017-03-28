@@ -1,3 +1,6 @@
+import Queue
+events = Queue.Queue()
+
 class Event(object):
     pass
 

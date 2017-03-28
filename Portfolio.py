@@ -6,13 +6,16 @@ import Queue
 from abc import ABCMeta, abstractmethod
 from math import floor
 
-from event import FillEvent, OrderEvent
+from event import FillEvent, OrderEvent, events
 
 from performance import create_sharpe_ratio, create_drawdowns
 
 class Portfolio(object):
 
     __metaclass__ = ABCMeta
+
+    def __init__(self,events):
+        self.events = events
 
     @abstractmethod
     def update_signal(self, event):
@@ -23,9 +26,10 @@ class Portfolio(object):
         raise NotImplementedError('Should implement update_fill()')
 
 class NaivePortfolio(Portfolio):
-    def __init__(self, bars, events, start_date, initial_capital=100000.0):
+    def __init__(self, bars, start_date, initial_capital=100000.0):
+        super(NaivePortfolio, self).__init__(events)
+
         self.bars = bars
-        self.events = events
         self.symbol_list = self.bars.symbol_list
         self.start_date = start_date
         self.initial_capital = initial_capital
@@ -159,9 +163,9 @@ class NaivePortfolio(Portfolio):
         cur_quantity = self.current_positions[symbol]
         order_type = 'MKT'
 
-        if direction == 'LONG' and cur_quantity == 0:
+        if direction == 'LONG':   # and cur_quantity == 0:
             order = OrderEvent(symbol, order_type, mkt_quantity, 'BUY')
-        if direction == 'SHORT' and cur_quantity ==0:
+        if direction == 'SHORT':  # and cur_quantity ==0:
             order = OrderEvent (symbol, order_type, mkt_quantity, 'SELL')
 
         if direction == 'EXIT' and cur_quantity > 0:

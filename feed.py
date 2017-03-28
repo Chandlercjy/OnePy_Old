@@ -3,11 +3,14 @@ import os, os.path
 import pandas as pd
 
 from abc import ABCMeta, abstractmethod
-from event import MarketEvent
+from event import MarketEvent,events
 
 class DataHandler(object):
 
     __metaclass__ = ABCMeta
+
+    def __init__(self,events):
+        self.events = events
 
     @abstractmethod
     def get_latest_bars(self, symbol, N=1):
@@ -18,8 +21,10 @@ class DataHandler(object):
         raise NotImplementedError("Should implement update_bars()")
 
 class CSV_tushare_stock(DataHandler):
-    def __init__(self, events, csv_path, symbol):
-        self.events = events
+    def __init__(self, csv_path, symbol):
+
+        super(CSV_tushare_stock, self).__init__(events)
+
         self.csv_path = csv_path
         self.symbol = symbol   # str
 
