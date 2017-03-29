@@ -25,14 +25,14 @@ class OnePiece():
             else:
                 if event is not None:
                     if event.type == 'Market':
-                        self.strategy.calculate_signals(event)
+                        self.strategy.calculate_signals()
 
                     if event.type == 'Signal':
                         self.portfolio.update_signal(event)
 
                     if event.type == 'Order':
                         self.order.execute_order(event)
-                        event.print_order()
+                        # event.print_order()
 
                     if event.type == 'Fill':
                         self.portfolio.update_fill(event)

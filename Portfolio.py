@@ -14,20 +14,8 @@ class Portfolio(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self,events):
+    def __init__(self,events,bars,start_date,initial_capital):
         self.events = events
-
-    @abstractmethod
-    def update_signal(self, event):
-        raise NotImplementedError('Should implement update_signal()')
-
-    @abstractmethod
-    def update_fill(self, event):
-        raise NotImplementedError('Should implement update_fill()')
-
-class NaivePortfolio(Portfolio):
-    def __init__(self, bars, start_date, initial_capital=100000.0):
-        super(NaivePortfolio, self).__init__(events)
 
         self.bars = bars
         self.symbol_list = self.bars.symbol_list
@@ -39,6 +27,19 @@ class NaivePortfolio(Portfolio):
                                                 for s in self.symbol_list])
         self.all_holdings = self.construct_all_holdings()
         self.current_holdings = self.construct_current_holdings()
+    @abstractmethod
+    def update_signal(self, event):
+        raise NotImplementedError('Should implement update_signal()')
+
+    @abstractmethod
+    def update_fill(self, event):
+        raise NotImplementedError('Should implement update_fill()')
+
+class NaivePortfolio(Portfolio):
+    def __init__(self, bars, start_date='start_date', initial_capital=100000.0):
+        super(NaivePortfolio, self).__init__(events,bars,start_date,initial_capital)
+
+
 
     def construct_all_positions(self):
         d = dict( (k,v) for k, v in [(s, 0) for s in self.symbol_list] )

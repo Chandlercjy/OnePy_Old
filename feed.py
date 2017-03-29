@@ -21,18 +21,22 @@ class DataHandler(object):
         raise NotImplementedError("Should implement update_bars()")
 
 class CSV_tushare_stock(DataHandler):
-    def __init__(self, csv_path, symbol):
+    def __init__(self, csv_path, symbol, start=None,end=None):
 
         super(CSV_tushare_stock, self).__init__(events)
 
         self.csv_path = csv_path
         self.symbol = symbol   # str
+        self.start = start
+        self.end = end
 
         self.symbol_list = []  # stock code list
         self.symbol_list.append(symbol)
 
         self.symbol_dict = {}   # a dict contain DataFrames
         self.latest_bar_dict = {}
+        self.bar_df_dict = {}
+
         self.continue_backtest = True
 
         self._open_convert_csv_files()
@@ -45,18 +49,21 @@ class CSV_tushare_stock(DataHandler):
         s = self.symbol
         # Load the CSV and set index to Datatime
         symbol_data = pd.read_csv(self.csv_path, index_col=0)
-        symbol_data.index = symbol_data['date']
-        symbol_data.drop('date', axis=1, inplace=True)
-        symbol_data.index = pd.DatetimeIndex(symbol_data.index)
-        self.symbol_dict[s] = symbol_data
+        symbol_data.reset_index(drop=True,inplace=True)
+        symbol_data['date'] = pd.DatetimeIndex(symbol_data['date'])
+        symbol_data.set_index('date',inplace=True)
+
+        self.symbol_dict[s] = symbol_data.loc[self.start:self.end]
+
         # Combine the index to pad forward values, depreciated for now!!!
-        if comb_index is None:
-            comb_index = self.symbol_dict[s].index
-        else:
-            comb_index = comb_index.union(self.symbol_dict[s].index)
+        # if comb_index is None:
+        #     comb_index = self.symbol_dict[s].index
+        # else:
+        #     comb_index = comb_index.union(self.symbol_dict[s].index)
 
         # Create and Set the lates symbol_dict to None
         self.latest_bar_dict[s] = []
+        self.bar_df_dict[s] = pd.DataFrame()
 
         # Reindex the DataFrames, depreciated for now!!!
         self.symbol_dict[s] = self.symbol_dict[s].reindex(
@@ -86,6 +93,19 @@ class CSV_tushare_stock(DataHandler):
         else:
             return bars_list[-N:]
 
+    def convert_to_df(self,latest_bar):
+        d = latest_bar[0]
+        df = pd.DataFrame(data={'date':d[1],
+                                'open':d[2],
+                                'low':d[3],
+                                'high':d[4],
+                                'close':d[5],
+                                'volume':d[6]},index=[0])
+        df.reset_index(drop=True, inplace=True)
+        df['date']=pd.DatetimeIndex(df['date'])
+        df.set_index('date',inplace=True)
+        return df
+
 
     def update_bars(self):
         """
@@ -94,13 +114,17 @@ class CSV_tushare_stock(DataHandler):
         need a event loop
         and finally fullfill the latest_bar_dict
         """
-        if self.latest_bar_dict[self.symbol] == [] :
-            self.roll_data = self._get_new_bar(self.symbol)
+        s = self.symbol
+
+        if self.latest_bar_dict[s] == [] :
+            self.roll_data = self._get_new_bar(s)
         try:
             bar = self.roll_data.next()
         except StopIteration:
             self.continue_backtest = False
         else:
             if bar is not None:
-                self.latest_bar_dict[self.symbol].append(bar)
+                self.latest_bar_dict[s].append(bar)
+                bar_df = self.convert_to_df(self.get_latest_bars(s))
+                self.bar_df_dict[s] = self.bar_df_dict[s].append(bar_df)
         self.events.put(MarketEvent())
