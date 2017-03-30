@@ -1,8 +1,6 @@
 import datetime
-import numpy as np
 import pandas as pd
-import Queue
-import math
+from math import isnan
 
 from abc import ABCMeta, abstractmethod
 
@@ -31,7 +29,7 @@ class Strategy(object):
         bought = {}
         for s in self.symbol_list:
             bought[s] = False
-            return bought
+        return bought
 
     def get_latest_bars(symbol, n=1):
         bar = self.bars.get_latest_bars(symbol, n)
@@ -41,11 +39,11 @@ class Strategy(object):
         return self.bar_df_dict[symbol]
 
     ############## Order function ##############
-    def long(self,symbol,risky=False):
+    def long(self,symbol,strength=1,risky=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
         def put():
             if bar is not None and bar !=[]:
-                signal = SignalEvent(bar[0][0], bar[0][1], 'LONG')
+                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'LONG',strength)
                 self.events.put(signal)
 
         if not risky:
@@ -56,11 +54,11 @@ class Strategy(object):
         else:
             put()
 
-    def short(self,symbol,risky=False):
+    def short(self,symbol,strength=1,risky=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
         def put():
             if bar is not None and bar !=[]:
-                signal = SignalEvent(bar[0][0], bar[0][1], 'SHORT')
+                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'SHORT',strength)
                 self.events.put(signal)
 
         if not risky:
@@ -71,11 +69,11 @@ class Strategy(object):
         else:
             put()
 
-    def exit(self,symbol,risky=False):
+    def exitlong(self,symbol,strength=1,risky=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
         def put():
             if bar is not None and bar !=[]:
-                signal = SignalEvent(bar[0][0], bar[0][1], 'EXIT')
+                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITLONG',strength)
                 self.events.put(signal)
 
         if not risky:
@@ -86,9 +84,37 @@ class Strategy(object):
         else:
             put()
 
+    def exitshort(self,symbol,strength=1,risky=False):
+        bar = self.bars.get_latest_bars(symbol, N=1)
+        def put():
+            if bar is not None and bar !=[]:
+                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITSHORT',strength)
+                self.events.put(signal)
+
+        if not risky:
+            if self.bought[symbol] == True:
+                if bar is not None and bar !=[]:
+                    put()
+                    self.bought[symbol] = False
+        else:
+            put()
+
+    def exitall(self,symbol):
+        bar = self.bars.get_latest_bars(symbol, N=1)
+        def put():
+            if bar is not None and bar !=[]:
+                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITALL',strength=1)
+                self.events.put(signal)
+
+        if self.bought[symbol] == True:
+            if bar is not None and bar !=[]:
+                put()
+                self.bought[symbol] = False
+
+
     ##################################################
 
-def indicator(ind_func, name, df, timeperiod, select,index=False,signal=True):
+def indicator(ind_func, name, df, timeperiod, select,index=False):
     """
     ind_func: function from tablib
     ind_name: name of indicator
@@ -117,13 +143,12 @@ def indicator(ind_func, name, df, timeperiod, select,index=False,signal=True):
 
 
     if ori_df.shape[0] < timeperiod:
-        return
+        return float('nan')
 
     def check():
-        check = df_selected.empty or math.isnan(df_selected.iat[0,0])
+        check = df_selected.empty or isnan(df_selected.iat[0,0])
         if check:
             raise SyntaxError ('select NaN values!')
-
 
     if index:
         if type(select) is list:
@@ -157,10 +182,8 @@ def indicator(ind_func, name, df, timeperiod, select,index=False,signal=True):
 
     if index:
         return total_df
-    if signal:
-        return total_df.iat[0,0]
     else:
-        return total_df
+        return total_df.iat[0,0]
 
 ################ Strategy ####################
 from talib.abstract import *
@@ -169,16 +192,16 @@ class SMAStrategy(Strategy):
         super(SMAStrategy,self).__init__(events,bars)
 
     def calculate_signals(self):
-        df = self.bar_df_dict['000001'][['close']]
-
-        sma5=indicator(SMA, 'sma5', df, 5, select=[-1])
-        sma10=indicator(SMA, 'sma10', df, 10, select=[-1])
-        if sma5 > sma10:
-            self.long('000001')#,risky=True)
-        if sma5 < sma10:
-            self.exit('000001')#,risky=True)
-
-
+        for s in self.symbol_list:
+            df = self.bar_df_dict[s][['close']]
+            sma5=indicator(SMA, 'sma5', df, 2, select=[-1])
+            sma10=indicator(SMA, 'sma10', df, 10, select=[-1])
+            # if sma5 and sma10:
+            if sma5 > sma10:
+                self.long(s,risky=True)#,risky=True)
+            if sma5 < sma10:
+                # self.exit
+                self.short(s)#,risky=True)
 
 class BuyAndHoldStrategy(Strategy):
     def __init__(self,bars):
