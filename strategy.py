@@ -71,19 +71,15 @@ class Strategy(object):
         else:
             put()
 
-    def exitlong(self,symbol,strength=1,risky=False):
+    def exitlong(self,symbol,strength=1):
         bar = self.bars.get_latest_bars(symbol, N=1)
         def put():
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITLONG',strength)
                 self.events.put(signal)
 
+        put()
 
-        if self.bought[symbol] == True:
-            if bar is not None and bar !=[]:
-                put()
-                # if positon == 0
-                self.bought[symbol] = False
 
 
     def exitshort(self,symbol,strength=1,risky=False):
@@ -92,13 +88,8 @@ class Strategy(object):
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITSHORT',strength)
                 self.events.put(signal)
+        put()
 
-
-        if self.bought[symbol] == True:
-            if bar is not None and bar !=[]:
-                put()
-                # if positon == 0
-                self.bought[symbol] = False
 
 
     def exitall(self,symbol):
@@ -107,11 +98,7 @@ class Strategy(object):
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITALL',strength=1)
                 self.events.put(signal)
-
-        if self.bought[symbol] == True:
-            if bar is not None and bar !=[]:
-                put()
-                self.bought[symbol] = False
+        put()
 
 
     ##################################################
@@ -198,13 +185,13 @@ class SMAStrategy(Strategy):
 
             df = self.bar_df_dict[s][['close']]
 
-            sma5=indicator(SMA, 'sma5', df, 2, select=[-1])
-            sma10=indicator(SMA, 'sma10', df, 10, select=[-1])
-            if sma5 > sma10:
-                self.long(s,risky=True)
-            if sma5 < sma10:
-                # self.exit
+            sma1=indicator(SMA, 'sma5', df, 5, select=[-1])
+            sma2=indicator(SMA, 'sma10', df, 15, select=[-1])
+            if sma1 > sma2:
                 self.short(s)#,risky=True)
+            if sma1 < sma2:
+                # self.exit
+                self.exitall(s)#,risky=True)
 
 class BuyAndHoldStrategy(Strategy):
     def __init__(self,bars):

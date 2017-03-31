@@ -1,13 +1,10 @@
-from Portfolio import *
-from feed import *
-# import execution
-from strategy import *
-from execution import *
+import pandas as pd
+from execution import SimulatedExecutionHandler
 from event import events
 
 import Queue
 
-from pandas import DataFrame
+
 
 
 
@@ -29,6 +26,7 @@ class OnePiece():
             except Queue.Empty:
                 self.Feed.update_bars()
                 self.portfolio._update_timeindex()
+
             else:
                 if event is not None:
                     if event.type == 'Market':
@@ -40,24 +38,20 @@ class OnePiece():
                         # print event.datetime
 
                     if event.type == 'Order':
-                        self.execute.execute_order(event)
-
-                        # print order
-                        if self._activate['print_order']:
-                            event.print_order()
-
-                    if event.type == 'Fill':
                         if (self.portfolio.current_holdings['cash'] > event.quantity_l*event.price and
                             self.portfolio.current_holdings['cash'] > event.quantity_s*event.price):
 
-                            self.portfolio.update_fill(event)
+                            self.execute.execute_order(event)
 
+                        # print order
                             if self._activate['print_order']:
-                                event.print_executed()
+                                event.print_order()
 
+                    if event.type == 'Fill':
+                        self.portfolio.update_fill(event)
 
-
-
+                        if self._activate['print_order']:
+                            event.print_executed()
 
                 if self.Feed.continue_backtest == False:
                     print 'Here is your One Piece!'
@@ -67,7 +61,9 @@ class OnePiece():
         self._activate['print_order'] = True
 
     def get_log(self):
-        log = TradeLog(self.portfolio)
+        log = pd.DataFrame(self.portfolio.trade_log)
+        return log[['datetime','symbol','signal_type','qty',
+                    'cur_positions','cash','total','P/L']]
 
 
 

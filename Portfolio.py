@@ -8,7 +8,7 @@ from math import floor
 from event import FillEvent, OrderEvent, events
 
 from performance import create_sharpe_ratio, create_drawdowns
-from performance import *
+
 
 class Portfolio(object):
 
@@ -126,6 +126,7 @@ class NaivePortfolio(Portfolio):
 
         # Update holdings list with new quantities
         fill_cost = fill.price  # Close price
+        cost = 0
 
         if fill.signal_type == 'LONG' or fill.signal_type == 'EXITLONG':
             cost = fill_dir * fill_cost * fill.quantity_l
@@ -133,7 +134,7 @@ class NaivePortfolio(Portfolio):
 
         # Short is the opposite of long, so -fill_dir
         if fill.signal_type == 'SHORT' or fill.signal_type == 'EXITSHORT':
-            cost = fill_dir * fill_cost * fill.quantity_s
+            cost = -fill_dir * fill_cost * fill.quantity_s
             self.current_holdings[fill.symbol+'_short'] += cost
 
         if fill.signal_type == 'EXITALL':
@@ -142,6 +143,7 @@ class NaivePortfolio(Portfolio):
             cost_s = fill_dir * fill_cost * fill.quantity_s
             self.current_holdings[fill.symbol+'_long'] += cost_l
             self.current_holdings[fill.symbol+'_short'] += cost_s
+            cost = cost_l+cost_s
 
         # Update holdings list with new quantities
         self.current_holdings['commission'] += fill.commission
@@ -155,6 +157,20 @@ class NaivePortfolio(Portfolio):
         cur_quantity_l = self.current_positions[fill.symbol+'_long']
         cur_quantity_s = self.current_positions[fill.symbol+'_short']
 
+        bars = {}
+        for sym in self.symbol_list:
+            bars[sym] = self.bars.get_latest_bars(sym, N=1)
+
+        t = {}
+        for s in self.symbol_list:
+            # Approximation to the real value
+            market_value_l = self.current_positions[s+'_long'] * bars[s][0]['close']
+            market_value_s = self.current_positions[s+'_short'] * bars[s][0]['close']
+
+            t[s] = market_value_l + market_value_s
+
+        t_market_value = sum(t.values())
+
         if fill.signal_type == 'LONG':
             d['signal_type'] = 'long'
             d['symbol'] = fill.symbol
@@ -162,10 +178,9 @@ class NaivePortfolio(Portfolio):
             d['price'] = fill.price
             d['qty'] = fill.quantity_l
             d['cur_positions'] = cur_quantity_l
-            d['cash'] = self.all_holdings[-1]['cash']
-            d['P/L'] = '%0.1f'%(self.all_holdings[-1]['total'] - self.initial_capital)
-            d['total'] = self.all_holdings[-1]['total']
-
+            d['cash'] = self.current_holdings['cash']
+            d['total'] = t_market_value + d['cash']
+            d['P/L'] = d['total'] - self.initial_capital
 
         if fill.signal_type == 'SHORT':
             d['signal_type'] = 'short'
@@ -174,49 +189,51 @@ class NaivePortfolio(Portfolio):
             d['price'] = fill.price
             d['qty'] = fill.quantity_l
             d['cur_positions'] = cur_quantity_s
-            d['cash'] = self.all_holdings[-1]['cash']
-            d['P/L'] = self.all_holdings[-1]['total'] - self.initial_capital
-            d['total'] = self.all_holdings[-1]['total']
+            d['cash'] = self.current_holdings['cash']
+            d['total'] = t_market_value + d['cash']
+            d['P/L'] = d['total'] - self.initial_capital
 
 
         if fill.signal_type == 'EXITLONG' or fill.signal_type == 'EXITALL':
-            if cur_quantity_l > 0 and cur_quantity_s == 0:
-                d['signal_type'] = 'EXIT_long'
-                d['symbol'] = fill.symbol
-                d['datetime'] = fill.timeindex
-                d['price'] = fill.price
-                d['qty'] = fill.quantity_l
-                d['cur_positions'] = cur_quantity_l
-                # d['pl_points'] = 0
-                d['cash'] = self.all_holdings[-1]['cash']
-                d['P/L'] = self.all_holdings[-1]['total'] - self.initial_capital
-                d['total'] = self.all_holdings[-1]['total']
+            # if cur_quantity_l > 0 and cur_quantity_s == 0:
+            d['signal_type'] = 'EXIT_long'
+            d['symbol'] = fill.symbol
+            d['datetime'] = fill.timeindex
+            d['price'] = fill.price
+            d['qty'] = fill.quantity_l
+            d['cur_positions'] = cur_quantity_l
+            # d['pl_points'] = 0
+            d['cash'] = self.current_holdings['cash']
+            d['total'] = t_market_value + d['cash']
+            d['P/L'] = d['total'] - self.initial_capital
 
         if fill.signal_type == 'EXITSHORT' or fill.signal_type == 'EXITALL':
-            if cur_quantity_s > 0 and cur_quantity_l == 0:
-                d['signal_type'] = 'EXIT_short'
-                d['symbol'] = fill.symbol
-                d['datetime'] = fill.timeindex
-                d['price'] = fill.price
-                d['qty'] = fill.quantity_s
-                d['cur_positions'] = cur_quantity_s
-                # d['pl_points'] = 0
-                d['cash'] = self.all_holdings[-1]['cash']
-                d['P/L'] = self.all_holdings[-1]['total'] - self.initial_capital
-                d['total'] = self.all_holdings[-1]['total']
+            # if cur_quantity_s > 0 and cur_quantity_l == 0:
+            d['signal_type'] = 'EXIT_short'
+            d['symbol'] = fill.symbol
+            d['datetime'] = fill.timeindex
+            d['price'] = fill.price
+            d['qty'] = fill.quantity_s
+            d['cur_positions'] = cur_quantity_s
+            # d['pl_points'] = 0
+            d['cash'] = self.current_holdings['cash']
+            d['total'] = t_market_value + d['cash']
+            d['P/L'] = d['total'] - self.initial_capital
 
         if fill.signal_type == 'EXITALL':
-            if cur_quantity_s > 0 and cur_quantity_l > 0:
-                d['signal_type'] = 'EXIT_ALL'
-                d['symbol'] = fill.symbol
-                d['datetime'] = fill.timeindex
-                d['price'] = fill.price
-                d['qty'] = fill.quantity_s + fill.quantity_l
-                d['cur_positions'] = 0
-                # d['pl_points'] = 0
-                d['cash'] = self.all_holdings[-1]['cash']
-                d['P/L'] = self.all_holdings[-1]['total'] - self.initial_capital
-                d['total'] = self.all_holdings[-1]['total']
+            # if cur_quantity_s > 0 and cur_quantity_l > 0:
+            d['signal_type'] = 'EXIT_ALL'
+            d['symbol'] = fill.symbol
+            d['datetime'] = fill.timeindex
+            d['price'] = fill.price
+            d['qty'] = fill.quantity_s + fill.quantity_l
+            d['cur_positions'] = 0
+            # d['pl_points'] = 0
+            d['cash'] = self.current_holdings['cash']
+            d['total'] = t_market_value + d['cash']
+            d['P/L'] = d['total'] - self.initial_capital
+
+
 
         # update the trade_log
         self.current_trade_log = d
@@ -244,6 +261,8 @@ class NaivePortfolio(Portfolio):
         dh['commission'] = self.current_holdings['commission']
         dh['total'] = self.current_holdings['cash']
 
+        # calculate_total
+        t = {}
         for s in self.symbol_list:
             # Approximation to the real value
             market_value_l = self.current_positions[s+'_long'] * bars[s][0]['close']
@@ -251,8 +270,9 @@ class NaivePortfolio(Portfolio):
 
             market_value_s = self.current_positions[s+'_short'] * bars[s][0]['close']
             dh[s+'_short'] = market_value_s
+            t[s] = market_value_l + market_value_s
 
-            dh['total'] += market_value_l + market_value_s
+        dh['total'] += sum(t.values())
 
         # Append the current holdings
         self.all_holdings.append(dh)
@@ -294,7 +314,7 @@ class NaivePortfolio(Portfolio):
                                 direction = 'SELL')
 
         if signal_type == 'EXITLONG' and cur_quantity_l > 0:
-            order = OrderEvent(dt, signal_type, symbol,price,
+            order = OrderEvent(dt, signal_type, symbol, price,
                                order_type,
                                quantity_l = mkt_quantity,
                                quantity_s = 0,
@@ -302,7 +322,9 @@ class NaivePortfolio(Portfolio):
 
         if signal_type == 'EXITSHORT' and cur_quantity_s > 0:
             order = OrderEvent(dt, signal_type, symbol, price,
-                               order_type, mkt_quantity,
+                               order_type,
+                               quantity_l = 0,
+                               quantity_s = mkt_quantity,
                                direction = 'BUY')
 
 
@@ -315,7 +337,6 @@ class NaivePortfolio(Portfolio):
                                    quantity_s = 0,
                                    direction = 'SELL')
         # ALL SHORT
-        if signal_type == 'EXITALL':
             if cur_quantity_s > 0 and cur_quantity_l == 0:
                 order = OrderEvent(dt, signal_type, symbol, price,
                                    order_type,
@@ -323,7 +344,6 @@ class NaivePortfolio(Portfolio):
                                    quantity_s = cur_quantity_s,
                                    direction = 'BUY')
         # SHORT & LONG
-        if signal_type == 'EXITALL':
             if cur_quantity_s > 0 and cur_quantity_l > 0:
                 order = OrderEvent(dt, signal_type, symbol, price,
                                    order_type,
@@ -345,11 +365,13 @@ class NaivePortfolio(Portfolio):
         """
         self._update_positions_from_fill(fill)
         self._update_holdings_from_fill(fill)
+
+
         self._update_trade_log_from_fill(fill)
 
-        if self.all_positions[-1].values()[1:] != self.all_positions[-2].values()[1:]:
-            # Append the trade_log
-            self.trade_log.append(self.current_trade_log)
+        # if fill.quantity_s != 0 or fill.quantity_l != 0:
+        #     # Append the trade_log
+        self.trade_log.append(self.current_trade_log)
 
 ###############################################################################
     def create_equity_curve_dataframe(self):
