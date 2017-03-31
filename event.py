@@ -41,7 +41,7 @@ class OrderEvent(Event):
 
 class FillEvent(Event):
     def __init__(self, timeindex, symbol, exchange, quantity_l, quantity_s,
-                signal_type,direction, price, commission=None):
+                signal_type, direction, price, commission=None):
         self.type = 'Fill'
         self.timeindex = timeindex
         self.symbol = symbol
@@ -53,13 +53,37 @@ class FillEvent(Event):
         self.price = price
 
         # Calculate commission
-        if  commission is None:
+        if commission is None:
             self.commission = 0
         else:
             self.commission = commission
+
 
     def print_executed(self):
         cost = (self.quantity_l + self.quantity_s) * self.price
         print "%s, %s, %s EXECUTED @ %s, Cost:%s, Comm:%s" % \
             (self.timeindex, self.symbol, self.direction, self.price,
             cost, self.commission)
+
+
+    def get_symbol(self):
+        return self.symbol
+
+    def get_entry_date(self):
+        return self.timeindex
+
+
+    def get_entry_price(self):
+        return self.price
+
+    def get_long_short(self):
+        if self.signal_type == 'LONG':
+            return 'long'
+        if self.signal_type == 'SHORT':
+            return 'short'
+
+    def get_qty(self):
+        if self.signal_type == 'LONG':
+            return self.quantity_l
+        if self.signal_type == 'SHORT':
+            return self.quantity_s

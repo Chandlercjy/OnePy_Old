@@ -4,6 +4,7 @@ from feed import *
 from strategy import *
 from execution import *
 from event import events
+
 import Queue
 
 from pandas import DataFrame
@@ -16,9 +17,10 @@ class OnePiece():
         self.Feed = data
         self.strategy = strategy
         self.portfolio = portfolio
-        self.order = SimulatedExecutionHandler(events)
+        self.execute = SimulatedExecutionHandler(events)
 
         self._activate = {}
+        self._activate['print_order'] = False
 
     def sunny(self):
         while True:
@@ -31,21 +33,31 @@ class OnePiece():
                 if event is not None:
                     if event.type == 'Market':
                         self.strategy.calculate_signals()
+                        # print self.Feed.latest_bar_dict['000001'][-1]
 
                     if event.type == 'Signal':
                         self.portfolio.update_signal(event)
+                        # print event.datetime
 
                     if event.type == 'Order':
-                        self.order.execute_order(event)
+                        self.execute.execute_order(event)
 
                         # print order
                         if self._activate['print_order']:
                             event.print_order()
 
                     if event.type == 'Fill':
-                        self.portfolio.update_fill(event)
-                        if self._activate['print_order']:
-                            event.print_executed()
+                        if (self.portfolio.current_holdings['cash'] > event.quantity_l*event.price and
+                            self.portfolio.current_holdings['cash'] > event.quantity_s*event.price):
+
+                            self.portfolio.update_fill(event)
+
+                            if self._activate['print_order']:
+                                event.print_executed()
+
+
+
+
 
                 if self.Feed.continue_backtest == False:
                     print 'Here is your One Piece!'
@@ -53,6 +65,10 @@ class OnePiece():
 
     def print_trade(self):
         self._activate['print_order'] = True
+
+    def get_log(self):
+        log = TradeLog(self.portfolio)
+
 
 
     # get from portfolio

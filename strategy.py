@@ -46,13 +46,15 @@ class Strategy(object):
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'LONG',strength)
                 self.events.put(signal)
 
-        if not risky:
+        if risky:
+            put()
+
+        else:
             if self.bought[symbol] == False:
                 if bar is not None and bar !=[]:
                     put()
                     self.bought[symbol] = True
-        else:
-            put()
+
 
     def short(self,symbol,strength=1,risky=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
@@ -76,13 +78,13 @@ class Strategy(object):
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITLONG',strength)
                 self.events.put(signal)
 
-        if not risky:
-            if self.bought[symbol] == True:
-                if bar is not None and bar !=[]:
-                    put()
-                    self.bought[symbol] = False
-        else:
-            put()
+
+        if self.bought[symbol] == True:
+            if bar is not None and bar !=[]:
+                put()
+                # if positon == 0
+                self.bought[symbol] = False
+
 
     def exitshort(self,symbol,strength=1,risky=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
@@ -91,13 +93,13 @@ class Strategy(object):
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITSHORT',strength)
                 self.events.put(signal)
 
-        if not risky:
-            if self.bought[symbol] == True:
-                if bar is not None and bar !=[]:
-                    put()
-                    self.bought[symbol] = False
-        else:
-            put()
+
+        if self.bought[symbol] == True:
+            if bar is not None and bar !=[]:
+                put()
+                # if positon == 0
+                self.bought[symbol] = False
+
 
     def exitall(self,symbol):
         bar = self.bars.get_latest_bars(symbol, N=1)
@@ -193,12 +195,13 @@ class SMAStrategy(Strategy):
 
     def calculate_signals(self):
         for s in self.symbol_list:
+
             df = self.bar_df_dict[s][['close']]
+
             sma5=indicator(SMA, 'sma5', df, 2, select=[-1])
             sma10=indicator(SMA, 'sma10', df, 10, select=[-1])
-            # if sma5 and sma10:
             if sma5 > sma10:
-                self.long(s,risky=True)#,risky=True)
+                self.long(s,risky=True)
             if sma5 < sma10:
                 # self.exit
                 self.short(s)#,risky=True)

@@ -24,7 +24,7 @@ class CSV_tushare_stock(DataHandler):
 
     def __init__(self, csv_path, symbol_list, start=None,end=None):
 
-        super(CSV_tushare_stock2, self).__init__(events)
+        super(CSV_tushare_stock, self).__init__(events)
 
         self.csv_path = csv_path
         self.start = start
@@ -121,4 +121,4 @@ class CSV_tushare_stock(DataHandler):
                     # print self.get_latest_bars(s)
                     bar_df = self.convert_to_df(self.get_latest_bars(s))
                     self.bar_df_dict[s] = self.bar_df_dict[s].append(bar_df)
-            self.events.put(MarketEvent())
+        self.events.put(MarketEvent())

@@ -25,6 +25,7 @@ class SimulatedExecutionHandler(ExecutionHandler):
             time = datetime.datetime.utcnow()
         else:
             time = orderevent.dt
+
         fill_event = FillEvent(timeindex = time,
                                symbol = orderevent.symbol,
                                exchange = 'BLUE SEA',
