@@ -157,15 +157,11 @@ class NaivePortfolio(Portfolio):
         cur_quantity_l = self.current_positions[fill.symbol+'_long']
         cur_quantity_s = self.current_positions[fill.symbol+'_short']
 
-        bars = {}
-        for sym in self.symbol_list:
-            bars[sym] = self.bars.get_latest_bars(sym, N=1)
-
         t = {}
         for s in self.symbol_list:
             # Approximation to the real value
-            market_value_l = self.current_positions[s+'_long'] * bars[s][0]['close']
-            market_value_s = self.current_positions[s+'_short'] * bars[s][0]['close']
+            market_value_l = self.current_positions[s+'_long'] * fill.price
+            market_value_s = self.current_positions[s+'_short'] * fill.price
 
             t[s] = market_value_l + market_value_s
 
@@ -294,8 +290,13 @@ class NaivePortfolio(Portfolio):
         strength = signal.strength
         dt = signal.datetime
         price = signal.price
+        cash = self.current_holdings['cash']
 
-        mkt_quantity = floor(100 * strength)
+        if signal.percent:
+            mkt_quantity = floor(strength * 0.01 * cash / price / 100) * 100
+        else:
+            mkt_quantity = floor(100 * strength)
+
         cur_quantity_l = self.current_positions[symbol+'_long']
         cur_quantity_s = self.current_positions[symbol+'_short']
         order_type = 'MKT'

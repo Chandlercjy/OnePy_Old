@@ -11,14 +11,15 @@ class MarketEvent(Event):
         # print 'here is a marketevent'
 
 class SignalEvent(Event):
-    def __init__(self, symbol, datetime,price,signal_type,strength):
+    def __init__(self, symbol, datetime,price,signal_type,
+                strength,percent_sizer=False):
         self.type = 'Signal'
         self.symbol = symbol
         self.datetime = datetime
         self.price = price
         self.signal_type = signal_type
         self.strength = strength  # control the amount of positions
-
+        self.percent = percent_sizer
 
 class OrderEvent(Event):
     def __init__(self, dt, signal_type ,symbol,price,

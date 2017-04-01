@@ -21,6 +21,9 @@ class Strategy(object):
 
         self.bar = None
 
+    def prepare(self,bars):
+        super(SMAStrategy,self).__init__(events,bars)
+
     @abstractmethod
     def calculate_signals(self):
         raise NotImplemented('Should implement calculate_signals()')
@@ -39,11 +42,12 @@ class Strategy(object):
         return self.bar_df_dict[symbol]
 
     ############## Order function ##############
-    def long(self,symbol,strength=1,risky=False):
+    def long(self,symbol,strength=1,risky=False,percent=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
         def put():
             if bar is not None and bar !=[]:
-                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'LONG',strength)
+                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'],
+                                    'LONG', strength, percent)
                 self.events.put(signal)
 
         if risky:
@@ -56,11 +60,12 @@ class Strategy(object):
                     self.bought[symbol] = True
 
 
-    def short(self,symbol,strength=1,risky=False):
+    def short(self,symbol,strength=1,risky=False,percent=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
         def put():
             if bar is not None and bar !=[]:
-                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'SHORT',strength)
+                signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'],
+                                     'SHORT',strength, percent)
                 self.events.put(signal)
 
         if not risky:
@@ -178,7 +183,7 @@ def indicator(ind_func, name, df, timeperiod, select,index=False):
 from talib.abstract import *
 class SMAStrategy(Strategy):
     def __init__(self,bars):
-        super(SMAStrategy,self).__init__(events,bars)
+        self.prepare(bars)
 
     def calculate_signals(self):
         for s in self.symbol_list:
@@ -190,7 +195,6 @@ class SMAStrategy(Strategy):
             if sma1 > sma2:
                 self.short(s)#,risky=True)
             if sma1 < sma2:
-                # self.exit
                 self.exitall(s)#,risky=True)
 
 class BuyAndHoldStrategy(Strategy):

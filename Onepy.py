@@ -4,10 +4,6 @@ from event import events
 
 import Queue
 
-
-
-
-
 class OnePiece():
     def __init__(self, data, strategy, portfolio):
         self.events = events
@@ -62,7 +58,7 @@ class OnePiece():
 
     def get_log(self):
         log = pd.DataFrame(self.portfolio.trade_log)
-        return log[['datetime','symbol','signal_type','qty',
+        return log[['datetime','symbol','signal_type','price','qty',
                     'cur_positions','cash','total','P/L']]
 
 
