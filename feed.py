@@ -21,11 +21,35 @@ class DataHandler(object):
         raise NotImplementedError("Should implement update_bars()")
 
 class csv_reader(DataHandler):
-    def __init__(self, csv_path, symbol_list, start=None,end=None):
+    def __init__(self, csv_path, symbol_list, start=None, end=None, caps=False):
+        """
+        csv_path: if /Users/csv/xxx.csv, just set csv_path = /User/csv
+        symbol_list: put csv file name in a list, like ['xxx']
+        start: 'Y-m-d', such as '2017-01-01', default to read all
+        end: 'Y-m-d', such as '2017-01-01', default to read all
+        caps: if True, csv.columns = ['Open,High,Low,Close,Volume,Adj Close']
+              if False, csv.columns = ['open,high,low,close,volume']
+            Attention! True will automatically set 'adj_close' to  override 'close'
+        """
 
         self.csv_path = csv_path
         self.start = start
         self.end = end
+        self.caps = caps
+
+        # OHLC
+        if self.caps:
+            self.open = 'Open'
+            self.high = 'High'
+            self.low = 'Low'
+            self.close = 'Adj Close'
+            self.volume = 'Volume'
+        else:
+            self.open = 'open'
+            self.high = 'high'
+            self.low = 'low'
+            self.close = 'close'
+            self.volume = 'volume'
 
         self.symbol_list = symbol_list  # stock code list
 
@@ -73,9 +97,11 @@ class csv_reader(DataHandler):
         lenth = len(df)
         for i in range(lenth):
             yield ({'symbol':symbol, 'date':str(df.index[i]),
-                         'open':df.iat[i,0],'low':df.iat[i,3],
-                         'high':df.iat[i,2], 'close':df.iat[i,1],
-                         'volume':df.iat[i,4],'code':df.iat[i,5]})
+                    'open':df[[self.open]].iat[i,0],
+                    'low':df[[self.low]].iat[i,0],
+                    'high':df[[self.high]].iat[i,0],
+                    'close':df[[self.close]].iat[i,0],
+                    'volume':df[[self.volume]].iat[i,0]})
 
     def get_latest_bars(self, symbol, N=1):
         try:
@@ -117,12 +143,27 @@ class csv_reader(DataHandler):
         events.put(MarketEvent())
 
 class DataFrame_reader(DataHandler):
-    def __init__(self, df, symbol, start=None,end=None):
+    def __init__(self, df, symbol, start=None, end=None, caps=False):
 
         self.df = df
         self.start = start
         self.end = end
         self.symbol_list =[symbol]  # stock code list
+
+        # OHLC
+        if self.caps:
+            self.open = 'Open'
+            self.high = 'High'
+            self.low = 'Low'
+            self.close = 'Adj Close'
+            self.volume = 'Volume'
+        else:
+            self.open = 'open'
+            self.high = 'high'
+            self.low = 'low'
+            self.close = 'close'
+            self.volume = 'volume'
+
 
         self.symbol_dict = {}   # a dict contain DataFrames
         self.latest_bar_dict = {}
@@ -166,9 +207,11 @@ class DataFrame_reader(DataHandler):
         lenth = len(df)
         for i in range(lenth):
             yield ({'symbol':symbol, 'date':str(df.index[i]),
-                         'open':df.iat[i,0],'low':df.iat[i,3],
-                         'high':df.iat[i,2], 'close':df.iat[i,1],
-                         'volume':df.iat[i,4],'code':df.iat[i,5]})
+                    'open':df[[self.open]].iat[i,0],
+                    'low':df[[self.low]].iat[i,0],
+                    'high':df[[self.high]].iat[i,0],
+                    'close':df[[self.close]].iat[i,0],
+                    'volume':df[[self.volume]].iat[i,0]})
 
     def get_latest_bars(self, symbol, N=1):
         try:

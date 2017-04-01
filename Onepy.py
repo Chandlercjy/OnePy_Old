@@ -16,17 +16,18 @@ class OnePiece():
         self._activate['print_order'] = False
 
     def sunny(self):
+        print 'Starting Portfolio Value: '+ str(self.portfolio.initial_capital)
+
         while True:
             try:
                 event = self.events.get(False)
             except Queue.Empty:
                 self.Feed.update_bars()
                 self.portfolio._update_timeindex()
-
             else:
                 if event is not None:
                     if event.type == 'Market':
-                        self.strategy.calculate_signals()
+                        self.strategy.luffy()
                         # print self.Feed.latest_bar_dict['000001'][-1]
 
                     if event.type == 'Signal':
@@ -50,6 +51,10 @@ class OnePiece():
                             event.print_executed()
 
                 if self.Feed.continue_backtest == False:
+                    self.portfolio.create_equity_curve_dataframe()
+
+                    print 'Final Portfolio Value: '+ str(self.portfolio.all_holdings[-1]['total'])
+                    print self.portfolio.output_summary_stats()
                     print 'Here is your One Piece!'
                     break
 
@@ -58,10 +63,8 @@ class OnePiece():
 
     def get_log(self):
         log = pd.DataFrame(self.portfolio.trade_log)
-        return log[['datetime','symbol','signal_type','price','qty',
+        return log[['datetime','symbol','s_type','price','qty',
                     'cur_positions','cash','total','P/L']]
-
-
 
     # get from portfolio
     def get_current_holdings(self):

@@ -10,23 +10,22 @@ class Strategy(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self,events,bars):
-        self.events = events
+    def __init__(self,bars):
         self.bars = bars  # object of feed
 
         self.symbol_list = self.bars.symbol_list
         self.bar_df_dict = self.bars.bar_df_dict
+        self.ddd = {}
 
         self.bought = self._calculate_initial_bought()
 
         self.bar = None
 
-    def prepare(self,bars):
-        super(SMAStrategy,self).__init__(events,bars)
+
 
     @abstractmethod
-    def calculate_signals(self):
-        raise NotImplemented('Should implement calculate_signals()')
+    def luffy(self):
+        raise NotImplemented('Should implement luffy()')
 
     def _calculate_initial_bought(self):
         bought = {}
@@ -34,11 +33,7 @@ class Strategy(object):
             bought[s] = False
         return bought
 
-    def get_latest_bars(symbol, n=1):
-        bar = self.bars.get_latest_bars(symbol, n)
-        return bar
-
-    def get_df(symbol):
+    def get_df(self,symbol):
         return self.bar_df_dict[symbol]
 
     ############## Order function ##############
@@ -48,7 +43,7 @@ class Strategy(object):
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'],
                                     'LONG', strength, percent)
-                self.events.put(signal)
+                events.put(signal)
 
         if risky:
             put()
@@ -66,7 +61,7 @@ class Strategy(object):
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'],
                                      'SHORT',strength, percent)
-                self.events.put(signal)
+                events.put(signal)
 
         if not risky:
             if self.bought[symbol] == False:
@@ -81,7 +76,7 @@ class Strategy(object):
         def put():
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITLONG',strength)
-                self.events.put(signal)
+                events.put(signal)
 
         put()
 
@@ -92,7 +87,7 @@ class Strategy(object):
         def put():
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITSHORT',strength)
-                self.events.put(signal)
+                events.put(signal)
         put()
 
 
@@ -102,7 +97,7 @@ class Strategy(object):
         def put():
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITALL',strength=1)
-                self.events.put(signal)
+                events.put(signal)
         put()
 
 
@@ -185,22 +180,22 @@ class SMAStrategy(Strategy):
     def __init__(self,bars):
         self.prepare(bars)
 
-    def calculate_signals(self):
+    def luffy(self):
         for s in self.symbol_list:
 
-            df = self.bar_df_dict[s][['close']]
+            df = self.bar_df_dict[s]
 
             sma1=indicator(SMA, 'sma5', df, 5, select=[-1])
             sma2=indicator(SMA, 'sma10', df, 15, select=[-1])
             if sma1 > sma2:
-                self.short(s)#,risky=True)
+                self.short(s,strength=3,percent=True,risky=True)
             if sma1 < sma2:
                 self.exitall(s)#,risky=True)
 
 class BuyAndHoldStrategy(Strategy):
     def __init__(self,bars):
-        super(BuyAndHoldStrategy,self).__init__(events,bars)
+        super(BuyAndHoldStrategy,self).__init__(bars)
 
-    def calculate_signals(self):
+    def luffy(self):
         # if event.type == 'Market':
         self.long('000001')
