@@ -21,8 +21,6 @@ class Strategy(object):
 
         self.bar = None
 
-
-
     @abstractmethod
     def luffy(self):
         raise NotImplemented('Should implement luffy()')
@@ -36,7 +34,8 @@ class Strategy(object):
     def get_df(self,symbol):
         return self.bar_df_dict[symbol]
 
-    ############## Order function ##############
+###################### Order function ############################
+
     def long(self,symbol,strength=1,risky=False,percent=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
         def put():
@@ -44,16 +43,13 @@ class Strategy(object):
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'],
                                     'LONG', strength, percent)
                 events.put(signal)
-
         if risky:
             put()
-
         else:
             if self.bought[symbol] == False:
                 if bar is not None and bar !=[]:
                     put()
                     self.bought[symbol] = True
-
 
     def short(self,symbol,strength=1,risky=False,percent=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
@@ -62,7 +58,6 @@ class Strategy(object):
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'],
                                      'SHORT',strength, percent)
                 events.put(signal)
-
         if not risky:
             if self.bought[symbol] == False:
                 if bar is not None and bar !=[]:
@@ -77,10 +72,7 @@ class Strategy(object):
             if bar is not None and bar !=[]:
                 signal = SignalEvent(symbol, bar[0]['date'],bar[0]['close'], 'EXITLONG',strength)
                 events.put(signal)
-
         put()
-
-
 
     def exitshort(self,symbol,strength=1,risky=False):
         bar = self.bars.get_latest_bars(symbol, N=1)
@@ -100,8 +92,7 @@ class Strategy(object):
                 events.put(signal)
         put()
 
-
-    ##################################################
+#########################  Indicator  ###########################
 
 def indicator(ind_func, name, df, timeperiod, select,index=False):
     """
@@ -115,7 +106,6 @@ def indicator(ind_func, name, df, timeperiod, select,index=False):
     index: default False, if True, select df by index
         - for example:
             select=[1,2] means df.iloc[1:2,:]
-
     """
     def offset(select):
         if min(select)<0:
@@ -174,7 +164,8 @@ def indicator(ind_func, name, df, timeperiod, select,index=False):
     else:
         return total_df.iat[0,0]
 
-################ Strategy ####################
+##################### Customize Strategy #########################
+
 from talib.abstract import *
 class SMAStrategy(Strategy):
     def __init__(self,bars):

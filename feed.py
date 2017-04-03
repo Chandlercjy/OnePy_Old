@@ -164,7 +164,6 @@ class DataFrame_reader(DataHandler):
             self.close = 'close'
             self.volume = 'volume'
 
-
         self.symbol_dict = {}   # a dict contain DataFrames
         self.latest_bar_dict = {}
         self.bar_df_dict = {}

@@ -141,8 +141,6 @@ class Portfolio(object):
         self.current_holdings['cash'] -= (cost + fill.commission)
         self.current_holdings['total'] -= (cost + fill.commission)
 
-
-############
     def _update_trade_log_from_fill(self,fill):
         d = {}
         cur_quantity_l = self.current_positions[fill.symbol+'_long']
@@ -159,7 +157,7 @@ class Portfolio(object):
         t_market_value = sum(t.values())
 
         if fill.signal_type == 'LONG':
-            d['s_type'] = 'long'
+            d['s_type'] = 'LONG'
             d['symbol'] = fill.symbol
             d['datetime'] = fill.timeindex
             d['price'] = fill.price
@@ -167,10 +165,10 @@ class Portfolio(object):
             d['cur_positions'] = cur_quantity_l
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['P/L'] = '%0.2f' % (d['total'] - self.initial_capital)
+            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         if fill.signal_type == 'SHORT':
-            d['s_type'] = 'short'
+            d['s_type'] = 'SHORT'
             d['symbol'] = fill.symbol
             d['datetime'] = fill.timeindex
             d['price'] = fill.price
@@ -178,12 +176,12 @@ class Portfolio(object):
             d['cur_positions'] = cur_quantity_s
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['P/L'] = '%0.2f' % (d['total'] - self.initial_capital)
+            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
 
         if fill.signal_type == 'EXITLONG' or fill.signal_type == 'EXITALL':
             # if cur_quantity_l > 0 and cur_quantity_s == 0:
-            d['s_type'] = 'EXIT_long'
+            d['s_type'] = 'EXIT_LONG'
             d['symbol'] = fill.symbol
             d['datetime'] = fill.timeindex
             d['price'] = fill.price
@@ -192,11 +190,11 @@ class Portfolio(object):
             # d['pl_points'] = 0
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['P/L'] = '%0.2f' % (d['total'] - self.initial_capital)
+            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         if fill.signal_type == 'EXITSHORT' or fill.signal_type == 'EXITALL':
             # if cur_quantity_s > 0 and cur_quantity_l == 0:
-            d['s_type'] = 'EXIT_short'
+            d['s_type'] = 'EXIT_SHORT'
             d['symbol'] = fill.symbol
             d['datetime'] = fill.timeindex
             d['price'] = fill.price
@@ -205,7 +203,7 @@ class Portfolio(object):
             # d['pl_points'] = 0
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['P/L'] = '%0.2f' % (d['total'] - self.initial_capital)
+            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         if fill.signal_type == 'EXITALL':
             # if cur_quantity_s > 0 and cur_quantity_l > 0:
@@ -218,11 +216,10 @@ class Portfolio(object):
             # d['pl_points'] = 0
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['P/L'] = '%0.2f' % (d['total'] - self.initial_capital)
+            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         # update the trade_log
         self.current_trade_log = d
-
 
     def _update_timeindex(self):
         bars = {}
@@ -270,7 +267,7 @@ class MyPortfolio(Portfolio):
 
 
 class NaivePortfolio(Portfolio):
-    def __init__(self, bars, start_date='start_date', initial_capital=100000.0):
+    def __init__(self, bars, start_date='1993-08-07', initial_capital=100000.0):
         super(NaivePortfolio, self).__init__(events,bars,start_date,initial_capital)
 
     def _generate_naive_order(self, signal):
@@ -356,7 +353,6 @@ class NaivePortfolio(Portfolio):
                                    quantity_l = cur_quantity_l,
                                    quantity_s = cur_quantity_s,
                                    direction = 'BUY&SELL')
-
         return order
 
     def update_signal(self, signal):
@@ -376,21 +372,24 @@ class NaivePortfolio(Portfolio):
         self._update_trade_log_from_fill(fill)
 
         if fill.quantity_s != 0 or fill.quantity_l != 0:
-        #     # Append the trade_log
+            # Append the trade_log
             self.trade_log.append(self.current_trade_log)
 
-###############################################################################
-    def create_equity_curve_dataframe(self):
+##################################################################
+
+    def create_equity_curve_df(self):
         curve = pd.DataFrame(self.all_holdings)
         curve.set_index('datetime', inplace=True)
         curve['returns'] = curve['total'].pct_change()
         curve['equity_curve'] = (1.0+curve['returns']).cumprod()
-        self.equity_curve = curve
+        return curve
 
     def output_summary_stats(self):
-        total_return = self.equity_curve['equity_curve'][-1]
-        returns = self.equity_curve['returns']
-        pnl = self.equity_curve['equity_curve']
+        equity_curve = self.create_equity_curve_df()
+
+        total_return = equity_curve['equity_curve'][-1]
+        returns = equity_curve['returns']
+        pnl = equity_curve['equity_curve']
 
         sharpe_ratio = create_sharpe_ratio(returns)
         max_dd, dd_duration = create_drawdowns(pnl)

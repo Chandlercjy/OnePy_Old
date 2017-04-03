@@ -20,10 +20,6 @@ def tushare_clean(csv_path, override=True, pickle_name=None):
 
     for i in walk_list[2]:
         if 'csv' in i:
-            # csv_list.append(i)
-            #
-            # for i in csv_list:
-            #     print 'xxx'
             df = pd.read_csv(os.path.join(csv_path, '%s' % i),
                                             parse_dates=True,index_col=0)
             cleaned_df = clean(df)
