@@ -63,17 +63,8 @@ class OnePiece():
 
                         if self._activate['print_order']:
                             event.print_executed()
-                    # if event.type == 'Fill':
-                    #     def dd(self,event):
-                    #         self.portfolio.update_fill(event)
-                    #         if self._activate['print_order']:
-                    #             event.print_executed()
-                    #     a = threading.Thread(target=dd,args=(event))
-                    #     t.setDaemon(True)
-                    #     a.start
 
                 if self.Feed.continue_backtest == False:
-                    # a.join()
                     print 'Final Portfolio Value: '+ str(self.all_holdings[-1]['total'])
 
                     if self._activate['print_stats']:
@@ -93,6 +84,7 @@ class OnePiece():
             self._activate['full_stats'] = True
     def get_log(self):
         log = pd.DataFrame(self.portfolio.trade_log)
+        log['PnL'] = log['PnL'].astype(float)
         return log[['datetime','symbol','s_type','price','qty',
                     'cur_positions','cash','total','PnL']]
 
@@ -107,7 +99,7 @@ class OnePiece():
         start = self.get_equity_curve().index[0]
         end = self.get_equity_curve().index[-1]
         capital = self.initial_capital
-        return stats(tlog, dbal, start, end, capital)
+        print stats(tlog, dbal, start, end, capital)
 ####################### from portfolio ###############################
 
     def get_current_holdings(self):
