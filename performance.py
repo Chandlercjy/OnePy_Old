@@ -116,6 +116,7 @@ def generate_perfect_log(tlog,latest_bar_dict):
     td['update_short'] = 0
     td['sdata'] = 0
 
+    td['still_open'] = 0
 
     while True:
         try:
@@ -140,6 +141,8 @@ def generate_perfect_log(tlog,latest_bar_dict):
                 td['ldata']['period'] = td['edata']['datetime'] - td['ldata']['datetime']
 
                 td['ttlog'].append(td['ldata'])
+
+                td['still_open'] += 1
         else:
             # for long
             if td['etype'] == 'EXIT_LONG':
@@ -247,6 +250,8 @@ def generate_perfect_log(tlog,latest_bar_dict):
                 td['sdata']['period'] = td['edata']['datetime'] - td['sdata']['datetime']
 
                 td['ttlog'].append(td['sdata'])
+
+                td['still_open'] += 1
         else:
             # for short
             if td['etype'] == 'EXIT_SHORT':
@@ -327,4 +332,4 @@ def generate_perfect_log(tlog,latest_bar_dict):
                 else:
                     td['update_short'] = 1
                     td['seqty'] = 0
-    return td['ttlog']
+    return td['ttlog'], td['still_open']

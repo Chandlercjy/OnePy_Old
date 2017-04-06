@@ -94,31 +94,34 @@ class OnePiece():
         return df
 
     def get_analysis(self):
+        ori_tlog = self.get_log(True)
         tlog = self.get_log()
         dbal = self.get_equity_curve()
         start = self.get_equity_curve().index[0]
         end = self.get_equity_curve().index[-1]
         capital = self.initial_capital
-        print stats(tlog, dbal, start, end, capital)
+        print stats(tlog,ori_tlog, dbal, start, end, capital)
 
     def get_log(self,exit=False):
         # Original log, include exit_order
-        ori_log = pd.DataFrame(self.portfolio.trade_log)
-        ori_log.set_index('datetime',inplace=True)
-        ori_log.index =pd.DatetimeIndex(ori_log.index)
+        ori_tlog = pd.DataFrame(self.portfolio.trade_log)
+        ori_tlog.set_index('datetime',inplace=True)
+        ori_tlog.index =pd.DatetimeIndex(ori_tlog.index)
         # generate PnL, perfect log
-        log = generate_perfect_log(tlog = ori_log,
+        log,n = generate_perfect_log(tlog = ori_tlog,
                                    latest_bar_dict = self.Feed.latest_bar_dict)
         df = pd.DataFrame(log)
         df.set_index('datetime',inplace=True)
         df.index = pd.DatetimeIndex(df.index)
         df.sort_index(inplace=True)
         if exit:
-            return ori_log[['symbol','s_type','price','qty',
+            print 'Still_Opening_trades: ' + str(n)
+            return ori_tlog[['symbol','s_type','price','qty',
                         'cur_positions','cash','total']]
         else:
-            return df[['symbol','s_type','price','qty',
-                        'cur_positions','exit_date','period','cash','PnL','total']]
+            return df[['symbol','s_type','price','qty','cur_positions',
+                       'exit_date','period','cash','PnL','total']]
+
 ####################### from portfolio ###############################
 
     def get_current_holdings(self):

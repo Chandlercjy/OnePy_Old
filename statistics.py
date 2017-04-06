@@ -66,29 +66,15 @@ def total_net_profit(dbal,capital):
     return dbal[['total']].iat[-1,-1]- capital
 
 def gross_profit(tlog):
-    tlog = _get_exit_tlog(tlog)
     return tlog[tlog['PnL'] > 0].sum()['PnL']
 
 def gross_loss(tlog):
-    tlog = _get_exit_tlog(tlog)
     return tlog[tlog['PnL'] < 0].sum()['PnL']
-
-def unbalanced_PnL(dbal,tlog,capital):
-    return total_net_profit(dbal,capital) - gross_profit(tlog) - gross_loss(tlog)
 
 def profit_and_loss_ratio(tlog):
     if gross_profit(tlog) == 0: return 0
     if gross_loss(tlog) == 0: return 'Never Lose! This is your OnePiece!'
     return gross_profit(tlog) / gross_loss(tlog) * -1
-
-def True_profit_and_loss_ratio(tlog,dbal,capital):
-    uPnL = unbalanced_PnL(dbal, tlog, capital)
-    if uPnL > 0:
-        if gross_profit(tlog) + uPnL == 0: return 0
-        return gross_profit(tlog) + uPnL / gross_loss(tlog) * -1
-    else:
-        if gross_loss(tlog) + uPnL == 0: return 'Never Lose! This is your OnePiece!'
-        return gross_profit(tlog) / (gross_loss(tlog) + uPnL) * -1
 
 def return_on_initial_capital(dbal, capital):
     return total_net_profit(dbal,capital) / capital * 100
@@ -121,36 +107,32 @@ def pct_time_in_market(dbal):
 #####################################################################
 # SUMS
 def total_num_trades(tlog):
-    tlog = tlog[(tlog['s_type'] == 'LONG') | (tlog['s_type'] == 'SHORT')]
     return len(tlog.index)
 
-def total_EXIT_trades(tlog):
-    tlog = _get_exit_tlog(tlog)
-    return len(tlog.index)
+def total_EXIT_trades(ori_tlog):
+    ori_tlog = _get_exit_tlog(ori_tlog)
+    return len(ori_tlog.index)
 
 def num_winning_trades(tlog):
-    tlog = _get_exit_tlog(tlog)
     return (tlog['PnL'] > 0).sum()
 
 def num_losing_trades(tlog):
-    tlog = _get_exit_tlog(tlog)
     return (tlog['PnL'] < 0).sum()
 
 def num_even_trades(tlog):
-    tlog = _get_exit_tlog(tlog)
     return (tlog['PnL'] == 0).sum()
 
-def pct_profitable_trades(tlog):
-    if total_EXIT_trades(tlog) == 0: return 0
+def pct_profitable_trades(tlog,ori_tlog):
+    if total_EXIT_trades(ori_tlog) == 0: return 0
     return '%0.2f%%' % (float(num_winning_trades(tlog)) / \
-                        float(total_EXIT_trades(tlog)) * 100)
+                        float(total_EXIT_trades(ori_tlog)) * 100)
 
 #####################################################################
 # CASH PROFITS AND LOSSES
 
-def avg_profit_per_trade(tlog,dbal,capital):
-    if total_EXIT_trades(tlog) == 0: return 0
-    return float(total_net_profit(dbal,capital)) / total_EXIT_trades(tlog)
+def avg_profit_per_trade(tlog,ori_tlog,dbal,capital):
+    if total_EXIT_trades(ori_tlog) == 0: return 0
+    return float(total_net_profit(dbal,capital)) / total_EXIT_trades(ori_tlog)
 
 def avg_profit_per_winning_trade(tlog):
     if num_winning_trades(tlog) == 0: return 0
@@ -168,12 +150,10 @@ def ratio_avg_profit_win_loss(tlog):
 
 def largest_profit_winning_trade(tlog):
     if num_winning_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     return tlog[tlog['PnL'] > 0].max()['PnL']
 
 def largest_loss_losing_trade(tlog):
     if num_losing_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     return tlog[tlog['PnL'] < 0].min()['PnL']
 
 #####################################################################
@@ -181,53 +161,45 @@ def largest_loss_losing_trade(tlog):
 
 def num_winning_points(tlog):
     if num_winning_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     points = tlog['PnL']/tlog['qty']
     return points[points > 0].sum()
 
 def num_losing_points(tlog):
     if num_losing_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     points = tlog['PnL']/tlog['qty']
     return points[points < 0].sum()
 
 def total_net_points(tlog):
     return num_winning_points(tlog) + num_losing_points(tlog)
 
-def avg_points(tlog):
-    if total_EXIT_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
+def avg_points(tlog,ori_tlog):
+    if total_EXIT_trades(ori_tlog) == 0: return 0
     points = tlog['PnL']/tlog['qty']
     return points.sum() / len(tlog.index)
 
 def largest_points_winning_trade(tlog):
     if num_winning_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     points = tlog['PnL']/tlog['qty']
     return points.max()
 
 def largest_points_losing_trade(tlog):
     if num_losing_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     points = tlog['PnL']/tlog['qty']
     return points.min()
 
-def avg_pct_gain_points_per_trade(tlog):
-    if total_EXIT_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
+def avg_pct_gain_points_per_trade(tlog,ori_tlog):
+    if total_EXIT_trades(ori_tlog) == 0: return 0
     points = tlog['PnL']/tlog['qty']
-    series = points / _get_exit_tlog(tlog)['price']
-    return '%0.2f%%' % (np.average(series) * 100)
+    pct = np.average(points) / np.average(_get_exit_tlog(ori_tlog)['price'])
+    return '%0.2f%%' % (pct * 100)
 
 def largest_pct_winning_point(tlog):
     if num_winning_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     points = tlog['PnL']/tlog['qty']
     return '%0.2f%%' % (points.max() * 100)
 
 def largest_pct_losing_point(tlog):
     if num_losing_trades(tlog) == 0: return 0
-    tlog = _get_exit_tlog(tlog)
     points = tlog['PnL']/tlog['qty']
     return '%0.2f%%' % (points.min() * 100)
 
@@ -424,7 +396,7 @@ def sortino_ratio(rets, risk_free=0.00, period=TRADING_DAYS_PER_YEAR):
 #####################################################################
 # STATS - this is the primary call used to generate the results
 
-def stats(tlog, dbal, start, end, capital):
+def stats(tlog,ori_tlog, dbal, start, end, capital):
     """
     Compute trading stats
     Parameters
@@ -462,9 +434,7 @@ def stats(tlog, dbal, start, end, capital):
     stats['total_net_profit'] = total_net_profit(dbal,capital)
     stats['gross_profit'] = gross_profit(tlog)
     stats['gross_loss'] = gross_loss(tlog)
-    stats['unbalanced_PnL'] = unbalanced_PnL(dbal, tlog, capital)
     stats['P/L'] = profit_and_loss_ratio(tlog)
-    stats['True_P/L'] = True_profit_and_loss_ratio(tlog,dbal,capital)
     stats['return_on_initial_capital'] = \
         return_on_initial_capital(tlog, capital)
     cagr = annual_return_rate(ending_balance(dbal), capital, start, end)
@@ -474,14 +444,14 @@ def stats(tlog, dbal, start, end, capital):
 
     # SUMS
     stats['total_num_trades'] = total_num_trades(tlog)
-    stats['total_EXIT_trades'] = total_EXIT_trades(tlog)
+    stats['total_EXIT_trades'] = total_EXIT_trades(ori_tlog)
     stats['num_winning_trades'] = num_winning_trades(tlog)
     stats['num_losing_trades'] = num_losing_trades(tlog)
     stats['num_even_trades'] = num_even_trades(tlog)
-    stats['pct_profitable_trades'] = pct_profitable_trades(tlog)
+    stats['pct_profitable_trades'] = pct_profitable_trades(tlog,ori_tlog)
 
     # CASH PROFITS AND LOSSES
-    stats['avg_profit_per_trade'] = avg_profit_per_trade(tlog,dbal,capital)
+    stats['avg_profit_per_trade'] = avg_profit_per_trade(tlog,ori_tlog,dbal,capital)
     stats['avg_profit_per_winning_trade'] = avg_profit_per_winning_trade(tlog)
     stats['avg_loss_per_losing_trade'] = avg_loss_per_losing_trade(tlog)
     stats['ratio_avg_profit_win_loss'] = ratio_avg_profit_win_loss(tlog)
@@ -492,10 +462,10 @@ def stats(tlog, dbal, start, end, capital):
     stats['num_winning_points'] = num_winning_points(tlog)
     stats['num_losing_points'] = num_losing_points(tlog)
     stats['total_net_points'] = total_net_points(tlog)
-    stats['avg_points'] = avg_points(tlog)
+    stats['avg_points'] = avg_points(tlog,ori_tlog)
     stats['largest_points_winning_trade'] = largest_points_winning_trade(tlog)
     stats['largest_points_losing_trade'] = largest_points_losing_trade(tlog)
-    stats['avg_pct_gain_per_trade'] = avg_pct_gain_points_per_trade(tlog)
+    stats['avg_pct_gain_per_trade'] = avg_pct_gain_points_per_trade(tlog,ori_tlog)
     stats['largest_pct_winning_trade'] = largest_pct_winning_point(tlog)
     stats['largest_pct_losing_trade'] = largest_pct_losing_point(tlog)
 
