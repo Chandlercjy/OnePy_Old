@@ -165,7 +165,6 @@ class Portfolio(object):
             d['cur_positions'] = cur_quantity_l
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         if fill.signal_type == 'SHORT':
             d['s_type'] = 'SHORT'
@@ -176,7 +175,6 @@ class Portfolio(object):
             d['cur_positions'] = cur_quantity_s
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
 
         if fill.signal_type == 'EXITLONG' or fill.signal_type == 'EXITALL':
@@ -190,7 +188,6 @@ class Portfolio(object):
             # d['pl_points'] = 0
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         if fill.signal_type == 'EXITSHORT' or fill.signal_type == 'EXITALL':
             # if cur_quantity_s > 0 and cur_quantity_l == 0:
@@ -203,7 +200,6 @@ class Portfolio(object):
             # d['pl_points'] = 0
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         if fill.signal_type == 'EXITALL':
             # if cur_quantity_s > 0 and cur_quantity_l > 0:
@@ -216,7 +212,6 @@ class Portfolio(object):
             # d['pl_points'] = 0
             d['cash'] = self.current_holdings['cash']
             d['total'] = t_market_value + d['cash']
-            d['PnL'] = '%0.2f' % (d['total'] - self.initial_capital)
 
         # update the trade_log
         self.current_trade_log = d

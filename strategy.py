@@ -168,6 +168,9 @@ def indicator(ind_func, name, df, timeperiod, select,index=False):
 
 from talib.abstract import *
 class SMAStrategy(Strategy):
+    """
+    Attention! Do not put exitall and (exit_long or exit_short) together
+    """
     def __init__(self,bars):
         self.prepare(bars)
 

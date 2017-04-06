@@ -6,6 +6,7 @@ from threading import Thread
 import multiprocessing
 
 from statistics import stats
+from performance import generate_perfect_log
 from execution import SimulatedExecutionHandler
 from event import events
 
@@ -23,8 +24,11 @@ class OnePiece():
         self.broker = SimulatedExecutionHandler(commission=None)
 
         self.cur_holdings = self.portfolio.current_holdings
+        self.cur_positions = self.portfolio.current_positions
         self.all_holdings = self.portfolio.all_holdings
+        self.all_positions = self.portfolio.all_positions
         self.initial_capital = self.portfolio.initial_capital
+
 
         self._activate = {}
         self._activate['print_order'] = False
@@ -82,15 +86,11 @@ class OnePiece():
         self._activate['print_stats'] = True
         if full:
             self._activate['full_stats'] = True
-    def get_log(self):
-        log = pd.DataFrame(self.portfolio.trade_log)
-        log['PnL'] = log['PnL'].astype(float)
-        return log[['datetime','symbol','s_type','price','qty',
-                    'cur_positions','cash','total','PnL']]
 
     def get_equity_curve(self):
         df = self.portfolio.create_equity_curve_df()
         df.index =pd.DatetimeIndex(df.index)
+        df.drop('1993-08-07',inplace=True)
         return df
 
     def get_analysis(self):
@@ -100,19 +100,46 @@ class OnePiece():
         end = self.get_equity_curve().index[-1]
         capital = self.initial_capital
         print stats(tlog, dbal, start, end, capital)
+
+    def get_log(self,exit=False):
+        # Original log, include exit_order
+        ori_log = pd.DataFrame(self.portfolio.trade_log)
+        ori_log.set_index('datetime',inplace=True)
+        ori_log.index =pd.DatetimeIndex(ori_log.index)
+        # generate PnL, perfect log
+        log = generate_perfect_log(tlog = ori_log,
+                                   latest_bar_dict = self.Feed.latest_bar_dict)
+        df = pd.DataFrame(log)
+        df.set_index('datetime',inplace=True)
+        df.index = pd.DatetimeIndex(df.index)
+        df.sort_index(inplace=True)
+        if exit:
+            return ori_log[['symbol','s_type','price','qty',
+                        'cur_positions','cash','total']]
+        else:
+            return df[['symbol','s_type','price','qty',
+                        'cur_positions','exit_date','period','cash','PnL','total']]
 ####################### from portfolio ###############################
 
     def get_current_holdings(self):
         return pd.DataFrame(self.cur_holdings)
 
     def get_current_positions(self):
-        return pd.DataFrame(self.portfolio.current_positions)
+        return pd.DataFrame(self.cur_positions)
 
     def get_all_holdings(self):
-        return pd.DataFrame(self.all_holdings)
+        df = pd.DataFrame(self.all_holdings)
+        df.set_index('datetime',inplace=True)
+        df.drop('1993-08-07',inplace=True)
+        df.index =pd.DatetimeIndex(df.index)
+        return df
 
     def get_all_positions(self):
-        return pd.DataFrame(self.portfolio.all_positions)
+        df = pd.DataFrame(self.all_positions)
+        df.set_index('datetime',inplace=True)
+        df.drop('1993-08-07',inplace=True)
+        df.index =pd.DatetimeIndex(df.index)
+        return df
 
     def get_symbol_list(self):
         return self.portfolio.symbol_list
