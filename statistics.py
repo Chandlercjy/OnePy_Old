@@ -125,14 +125,14 @@ def num_even_trades(tlog):
 def pct_profitable_trades(tlog,ori_tlog):
     if total_EXIT_trades(ori_tlog) == 0: return 0
     return '%0.2f%%' % (float(num_winning_trades(tlog)) / \
-                        float(total_EXIT_trades(ori_tlog)) * 100)
+                        float(total_num_trades(tlog)) * 100)
 
 #####################################################################
 # CASH PROFITS AND LOSSES
 
 def avg_profit_per_trade(tlog,ori_tlog,dbal,capital):
     if total_EXIT_trades(ori_tlog) == 0: return 0
-    return float(total_net_profit(dbal,capital)) / total_EXIT_trades(ori_tlog)
+    return float(total_net_profit(dbal,capital)) / total_num_trades(tlog)
 
 def avg_profit_per_winning_trade(tlog):
     if num_winning_trades(tlog) == 0: return 0

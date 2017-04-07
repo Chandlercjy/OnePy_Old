@@ -14,7 +14,7 @@ class Strategy(object):
         self.bars = bars  # object of feed
 
         self.symbol_list = self.bars.symbol_list
-        self.bar_df_dict = self.bars.bar_df_dict
+        self.latest_bar_dict = self.bars.latest_bar_dict
         self.ddd = {}
 
         self.bought = self._calculate_initial_bought()
@@ -32,7 +32,7 @@ class Strategy(object):
         return bought
 
     def get_df(self,symbol):
-        return self.bar_df_dict[symbol]
+        return pd.DataFrame(self.latest_bar_dict[symbol])
 
 ###################### Order function ############################
 
@@ -94,7 +94,7 @@ class Strategy(object):
 
 #########################  Indicator  ###########################
 
-def indicator(ind_func, name, df, timeperiod, select,index=False):
+def indicator(ind_func, name, df, timeperiod, select, index=False):
     """
     ind_func: function from tablib
     ind_name: name of indicator
@@ -118,6 +118,8 @@ def indicator(ind_func, name, df, timeperiod, select,index=False):
     df = df.iloc[-timeperiod-off:,:]
     total_df = pd.DataFrame()
     ind_df = ind_func(df,timeperiod)
+    import talib.abstract as tb
+    print tb.SMA(df,10)
     ind_df = pd.DataFrame(ind_df)
 
 

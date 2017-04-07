@@ -55,7 +55,7 @@ class csv_reader(DataHandler):
 
         self.symbol_dict = {}   # a dict contain DataFrames
         self.latest_bar_dict = {}
-        self.bar_df_dict = {}
+
 
         self.continue_backtest = True
 
@@ -80,7 +80,6 @@ class csv_reader(DataHandler):
 
         # Create and Set the lates symbol_dict to None
             self.latest_bar_dict[s] = []
-            self.bar_df_dict[s] = pd.DataFrame()
 
         # Reindex the DataFrames, depreciated for now!!!
             self.symbol_dict[s] = self.symbol_dict[s].reindex(
@@ -137,9 +136,7 @@ class csv_reader(DataHandler):
             else:
                 if bar is not None:
                     self.latest_bar_dict[s].append(bar)
-                    # print self.get_latest_bars(s)
-                    bar_df = self.convert_to_df(self.get_latest_bars(s))
-                    self.bar_df_dict[s] = self.bar_df_dict[s].append(bar_df)
+
         events.put(MarketEvent())
 
 class DataFrame_reader(DataHandler):
@@ -166,7 +163,7 @@ class DataFrame_reader(DataHandler):
 
         self.symbol_dict = {}   # a dict contain DataFrames
         self.latest_bar_dict = {}
-        self.bar_df_dict = {}
+
 
         self.continue_backtest = True
 
@@ -189,7 +186,7 @@ class DataFrame_reader(DataHandler):
 
         # Create and Set the lates symbol_dict to None
             self.latest_bar_dict[s] = []
-            self.bar_df_dict[s] = pd.DataFrame()
+
 
         # Reindex the DataFrames, depreciated for now!!!
             self.symbol_dict[s] = self.symbol_dict[s].reindex(
@@ -246,7 +243,5 @@ class DataFrame_reader(DataHandler):
             else:
                 if bar is not None:
                     self.latest_bar_dict[s].append(bar)
-                    # print self.get_latest_bars(s)
-                    bar_df = self.convert_to_df(self.get_latest_bars(s))
-                    self.bar_df_dict[s] = self.bar_df_dict[s].append(bar_df)
+
         events.put(MarketEvent())

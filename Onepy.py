@@ -9,6 +9,7 @@ from statistics import stats
 from performance import generate_perfect_log
 from execution import SimulatedExecutionHandler
 from event import events
+from plotter import plotter
 
 import os,sys
 import matplotlib.pyplot as plt
@@ -150,6 +151,21 @@ class OnePiece():
     def get_initial_capital(self):
         return self.initial_capital
 
+    def plot(self,symbol,engine='plotly',notebook=False):
+        data = plotter(latest_bar_dict = self.Feed.latest_bar_dict,
+                        enquity_curve = self.get_equity_curve(),
+                        tlog = self.get_log(),
+                        positions = self.get_all_positions(),
+                        holdings = self.get_all_holdings())
+        data.plot(symbol=symbol,engine=engine,notebook=notebook)
+
+    def plot_log(self,symbol,engine='plotly',notebook=False):
+        data = plotter(latest_bar_dict = self.Feed.latest_bar_dict,
+                        enquity_curve = self.get_equity_curve(),
+                        tlog = self.get_log(),
+                        positions = self.get_all_positions(),
+                        holdings = self.get_all_holdings())
+        data.plot_log(symbol=symbol,engine=engine,notebook=notebook)
 
 ######################### For Optimize ###############################
 
@@ -221,9 +237,5 @@ def opti_analysis(pkl_path):
     style.use('ggplot')
     df[['Capital']].plot(table=df)
     plt.show()
-
-
-
-
 
 ######################################################################
