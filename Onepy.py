@@ -47,11 +47,9 @@ class OnePiece():
                 if event is not None:
                     if event.type == 'Market':
                         self.strategy.luffy()
-                        # print self.Feed.latest_bar_dict['000001'][-1]
 
                     if event.type == 'Signal':
                         self.portfolio.update_signal(event)
-                        # print event.datetime
 
                     if event.type == 'Order':
                         if (self.cur_holdings['cash'] > event.quantity_l*event.price and

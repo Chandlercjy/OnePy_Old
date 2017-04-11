@@ -118,8 +118,6 @@ def indicator(ind_func, name, df, timeperiod, select, index=False):
     df = df.iloc[-timeperiod-off:,:]
     total_df = pd.DataFrame()
     ind_df = ind_func(df,timeperiod)
-    import talib.abstract as tb
-    print tb.SMA(df,10)
     ind_df = pd.DataFrame(ind_df)
 
 
