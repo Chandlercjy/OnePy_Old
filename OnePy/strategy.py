@@ -15,7 +15,7 @@ class Strategy(object):
 
         self.symbol_list = self.bars.symbol_list
         self.latest_bar_dict = self.bars.latest_bar_dict
-        self.ddd = {}
+
 
         self.bought = self._calculate_initial_bought()
 

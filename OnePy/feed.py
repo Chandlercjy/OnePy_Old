@@ -140,19 +140,20 @@ class csv_reader(DataHandler):
         events.put(MarketEvent())
 
 class DataFrame_reader(DataHandler):
-    def __init__(self, df, symbol, start=None, end=None, caps=False):
+    def __init__(self, df, symbol_list, start=None, end=None, caps=False):
 
         self.df = df
         self.start = start
         self.end = end
-        self.symbol_list =[symbol]  # stock code list
+        self.symbol_list = symbol_list  # stock code list
+        self.caps = caps
 
         # OHLC
         if self.caps:
             self.open = 'Open'
             self.high = 'High'
             self.low = 'Low'
-            self.close = 'Adj Close'
+            self.close = 'Close'
             self.volume = 'Volume'
         else:
             self.open = 'open'

@@ -52,7 +52,11 @@ class OnePiece():
                         self.portfolio.update_signal(event)
 
                     if event.type == 'Order':
-                        if (self.cur_holdings['cash'] > event.quantity_l*event.price and
+
+                        if 'EXIT' in event.signal_type:
+                            self.broker.execute_order(event)
+
+                        elif (self.cur_holdings['cash'] > event.quantity_l*event.price and
                             self.cur_holdings['cash'] > event.quantity_s*event.price):
 
                             self.broker.execute_order(event)
@@ -60,6 +64,10 @@ class OnePiece():
                             # print order
                             if self._activate['print_order']:
                                 event.print_order()
+                        else:
+                            if self._activate['print_order']:
+                                print "Cash is not enough!!!!!!!!!!!!!!!!"
+                                event.cancel_order()
 
                     if event.type == 'Fill':
                         self.portfolio.update_fill(event)
