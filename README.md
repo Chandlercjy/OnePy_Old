@@ -65,6 +65,6 @@ Alternatives
 
 Contact
 -------
-I'm very interested in your experience with **Onepy**. Please feel free to contact me via **chenjiayicjy@126.com**
+I'm very interested in your experience with **Onepy**. Please feel free to contact me via **chenjiayicjy@126.com** or 知乎.
 
 **Chandler_Chan**
