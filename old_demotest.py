@@ -27,7 +27,9 @@ class MyStrategy(op.Strategy):
 #                 self.exitall(s)
 #                 self.long(s)#,strength=2,percent=True,risky=True)
 
-df = pd.read_csv('000001.csv', index_col=0, parse_dates=True)
+datapath = ''   # 请将datapath输入为000001.csv的文件存放路径
+
+df = pd.read_csv(datapath, index_col=0, parse_dates=True)
 symbol_list = ['000001']
 data = op.DataFrame_reader(df, symbol_list,start='2015-02-10')
 strategy = MyStrategy(data,[5,15])
