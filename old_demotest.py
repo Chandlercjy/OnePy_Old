@@ -41,6 +41,7 @@ go.print_trade()
 go.set_commission=2
 go.print_stats()
 go.sunny()
+go.plot('000001') # 画图
 
 # p_sma1=range(5,15)
 # p_sma2=range(20,30)
